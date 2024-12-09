@@ -1,0 +1,79 @@
+import datetime
+import webbrowser
+import pyttsx3
+import speech_recognition as sr
+
+# Initialize the text-to-speech engine
+engine = pyttsx3.init()
+
+# Function to make the assistant speak
+def speak(message):
+    engine.say(message)
+    engine.runAndWait()
+
+# Function to recognize speech input
+def listen():
+    recognizer = sr.Recognizer()
+    with sr.Microphone() as source:
+        print("Listening...")
+        recognizer.adjust_for_ambient_noise(source)  # Adjust for ambient noise
+        try: 
+            audio = recognizer.listen(source, timeout=5)  # Timeout added here
+            command = recognizer.recognize_google(audio)  # Recognize speech using Google API
+            print(f"You said: {command}")
+            return command.lower()
+        except sr.UnknownValueError:
+            speak("Sorry, I did not understand that.")
+            return ""
+        except sr.RequestError:
+            speak("Unable to connect to the internet.")
+            return ""
+        except sr.WaitTimeoutError:
+            speak("You were silent for too long.")
+            return ""
+
+# Respond to "Hello"
+def greet_user():
+    responses = ["Hello! How can I help you today?", "Hi there!"]
+    speak(responses[0])
+
+# Provide the current time
+def tell_time():
+    now = datetime.datetime.now()
+    current_time = now.strftime("%I:%M %p")
+    speak(f"The time is {current_time}")
+
+# Provide the current date
+def tell_date():
+    today = datetime.datetime.now()
+    date = today.strftime("%A, %d %B %Y")  # Corrected date format
+    speak(f"Today's date is {date}")
+
+# Search the web
+def search_web(query):
+    speak(f"Searching the web for {query}.")
+    webbrowser.open(f"https://www.google.com/search?q={query}")
+
+# Process user commands
+def process_command(command):
+    if "hello" in command:
+        greet_user()
+    elif "time" in command:
+        tell_time()
+    elif "date" in command:
+        tell_date()
+    elif "search for" in command:
+        query = command.replace("search for", "").strip()
+        search_web(query)
+    else:
+        speak("I'm sorry, I don't recognize that command.")
+
+# Main program
+if __name__ == "__main__":
+    speak("Voice assistant is online. How can I assist you?")
+    while True:
+        user_command = listen()
+        if user_command in ["exit", "quit", "stop"]:
+            speak("Thank you! Have a great day!")
+            break
+        process_command(user_command)
